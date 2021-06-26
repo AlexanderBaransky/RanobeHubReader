@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Ranobehub Reader</string>
+    <string name="last_updates">Последние обновления</string>
+    <string name="likes_label">Мне нравится</string>
+</resources>
