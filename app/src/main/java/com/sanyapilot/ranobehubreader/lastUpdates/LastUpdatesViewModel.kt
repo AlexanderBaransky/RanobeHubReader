@@ -6,9 +6,7 @@ import com.sanyapilot.ranobehubreader.API.Requests
 
 class LastUpdatesViewModel : ViewModel() {
     private var updatesList : MutableLiveData<LastUpdatesResponseModel> = MutableLiveData()
-    init {
-        update()
-    }
+
     fun getUpdates() = updatesList
     fun update() {
         updatesList.value = Requests.getLastUpdates()

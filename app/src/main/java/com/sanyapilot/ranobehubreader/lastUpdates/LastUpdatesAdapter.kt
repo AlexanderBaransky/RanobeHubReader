@@ -7,14 +7,14 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.bitmap.CenterCrop
 import com.bumptech.glide.load.resource.bitmap.FitCenter
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
-import com.sanyapilot.ranobehubreader.MainActivity
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
 import com.sanyapilot.ranobehubreader.R
 
 class LastUpdatesAdapter : RecyclerView.Adapter<LastUpdatesAdapter.ViewHolder>() {
     private lateinit var dataSet : LastUpdatesResponseModel
+    private var size : Int = 0
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
         private val currView = view
@@ -26,22 +26,26 @@ class LastUpdatesAdapter : RecyclerView.Adapter<LastUpdatesAdapter.ViewHolder>()
         private val lastUpdateChapters : TextView = view.findViewById(R.id.last_update_chapter_count)
         fun bind(data: Resource) {
             val context = currView.context
-            Glide.with(context)
-                .load(data.poster.medium).transform(
-                    FitCenter(),
-                    RoundedCorners(context.resources.getDimensionPixelSize(R.dimen.corner_radius)))
-                .into(lastUpdatePoster)
 
             lastUpdateTitle.text = data.names.rus
             lastUpdateSummary.text = data.synopsis
             lastUpdateLikes.text = data.rating.toString()
             lastUpdateVolumes.text = data.counts.volumes.dropLast(4)
             lastUpdateChapters.text = data.counts.chapters.dropLast(5)
+
+            Glide.with(context)
+                .load(data.poster.medium)
+                .transform(FitCenter(),
+                    RoundedCorners(context.resources.getDimensionPixelSize(R.dimen.corner_radius))
+                )
+                .transition(withCrossFade())
+                .into(lastUpdatePoster)
         }
     }
 
     fun refresh(data: LastUpdatesResponseModel) {
         this.dataSet = data
+        this.size = data.resource.size
         notifyDataSetChanged()
     }
 
@@ -56,5 +60,5 @@ class LastUpdatesAdapter : RecyclerView.Adapter<LastUpdatesAdapter.ViewHolder>()
         viewHolder.bind(dataSet.resource[position])
     }
 
-    override fun getItemCount() = dataSet.resource.size
+    override fun getItemCount() = size
 }

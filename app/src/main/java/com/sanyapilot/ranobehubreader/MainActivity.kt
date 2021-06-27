@@ -9,6 +9,7 @@ import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+import com.sanyapilot.ranobehubreader.API.Requests
 import com.sanyapilot.ranobehubreader.lastUpdates.LastUpdatesAdapter
 import com.sanyapilot.ranobehubreader.lastUpdates.LastUpdatesViewModel
 
@@ -24,9 +25,11 @@ class MainActivity : AppCompatActivity() {
 
         swipeRefreshLayout = findViewById(R.id.swiperefresh)
         swipeRefreshLayout.setOnRefreshListener {
-            lastUpdatesViewModel.update()
-            swipeRefreshLayout.isRefreshing = false
+            Requests.updateLastUpdates(this, lastUpdatesViewModel, swipeRefreshLayout)
         }
+
+        Requests.updateLastUpdates(this, lastUpdatesViewModel, swipeRefreshLayout) // Initialize API data get
+        swipeRefreshLayout.isRefreshing = true
 
         val recycler: RecyclerView = findViewById(R.id.lastUpdatesRecycler)
         val adapter = LastUpdatesAdapter()
@@ -47,7 +50,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem) = when (item.itemId) {
         R.id.refresh_button -> {
-            lastUpdatesViewModel.update()
+            swipeRefreshLayout.isRefreshing = false
+            swipeRefreshLayout.isRefreshing = true
+            Requests.updateLastUpdates(this, lastUpdatesViewModel, swipeRefreshLayout)
             true
         }
         else -> {
