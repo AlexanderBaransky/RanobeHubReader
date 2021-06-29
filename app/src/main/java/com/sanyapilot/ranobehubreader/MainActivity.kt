@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toolbar
 import androidx.activity.viewModels
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -15,13 +16,17 @@ import com.sanyapilot.ranobehubreader.lastUpdates.LastUpdatesViewModel
 
 class MainActivity : AppCompatActivity() {
     private val lastUpdatesViewModel : LastUpdatesViewModel by viewModels()
+    private lateinit var toolbar: androidx.appcompat.widget.Toolbar
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        setSupportActionBar(findViewById(R.id.last_updates_appbar))
+        toolbar = findViewById(R.id.last_updates_appbar)
+        toolbar.setTitle(R.string.last_updates)
+        toolbar.setSubtitle(R.string.connecting)
+        setSupportActionBar(toolbar)
 
         swipeRefreshLayout = findViewById(R.id.swiperefresh)
         swipeRefreshLayout.setOnRefreshListener {
@@ -38,7 +43,8 @@ class MainActivity : AppCompatActivity() {
 
         lastUpdatesViewModel.getUpdates().observe(this, Observer {
             it?.let {
-                adapter.refresh(it)
+                adapter.refresh(this, it)
+                toolbar.subtitle = ""
             }
         })
     }
