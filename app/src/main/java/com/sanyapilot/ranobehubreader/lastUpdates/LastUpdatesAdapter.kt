@@ -1,5 +1,8 @@
 package com.sanyapilot.ranobehubreader.lastUpdates
 
+import android.app.Activity
+import android.graphics.Bitmap
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -7,13 +10,17 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.bitmap.FitCenter
 import com.bumptech.glide.load.resource.bitmap.RoundedCorners
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade
+import com.bumptech.glide.request.FutureTarget
 import com.sanyapilot.ranobehubreader.R
+import java.util.concurrent.ExecutionException
+import kotlin.concurrent.thread
+
 
 class LastUpdatesAdapter : RecyclerView.Adapter<LastUpdatesAdapter.ViewHolder>() {
     private lateinit var dataSet : LastUpdatesResponseModel
+    private lateinit var context: Activity
     private var size : Int = 0
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view) {
@@ -24,27 +31,57 @@ class LastUpdatesAdapter : RecyclerView.Adapter<LastUpdatesAdapter.ViewHolder>()
         private val lastUpdateLikes : TextView = view.findViewById(R.id.last_update_likes_count)
         private val lastUpdateVolumes : TextView = view.findViewById(R.id.last_update_volumes_count)
         private val lastUpdateChapters : TextView = view.findViewById(R.id.last_update_chapter_count)
-        fun bind(data: Resource) {
-            val context = currView.context
+        fun bind(context: Activity, data: Resource) {
 
             lastUpdateTitle.text = data.names.rus
             lastUpdateSummary.text = data.synopsis
             lastUpdateLikes.text = data.rating.toString()
-            lastUpdateVolumes.text = data.counts.volumes.dropLast(4)
-            lastUpdateChapters.text = data.counts.chapters.dropLast(5)
+            lastUpdateVolumes.text = data.counts.volumes.split(" ")[0]
+            lastUpdateChapters.text = data.counts.chapters.split(" ")[0]
+            lastUpdatePoster.setImageResource(R.drawable.ic_baseline_cloud_download_48)
+            thread {
+                val url: String = if (data.poster.medium.startsWith("https://ranobehub.org")) {
+                    data.poster.medium
+                } else {
+                    "https://ranobehub.org" + data.poster.medium
+                }
 
-            Glide.with(context)
-                .load(data.poster.medium)
-                .transform(FitCenter(),
-                    RoundedCorners(context.resources.getDimensionPixelSize(R.dimen.corner_radius))
-                )
-                .transition(withCrossFade())
-                .into(lastUpdatePoster)
+                val futureTarget: FutureTarget<Bitmap> = Glide.with(context)
+                    .asBitmap()
+                    .load(url)
+                    .transform(RoundedCorners(
+                        context.resources.getDimensionPixelSize(R.dimen.corner_radius)))
+                    .submit()
+
+                try {
+                    val bitmap = futureTarget.get()
+
+                    context.runOnUiThread {
+                        //lastUpdatePoster.setImageBitmap(bitmap)
+                        Glide.with(context)
+                            .load(bitmap)
+                            .transition(withCrossFade())
+                            .into(lastUpdatePoster)
+                    }
+                } catch (e: ExecutionException) {
+                    Log.e("LastUpdatesAdapter","HTTP exception while getting images! Stopping thread!")
+                    context.runOnUiThread {
+                        Glide.with(context)
+                            .load(R.drawable.ic_baseline_error_48)
+                            .transition(withCrossFade())
+                            .into(lastUpdatePoster)
+                    }
+                    return@thread
+                } finally {
+                    Glide.with(context).clear(futureTarget)
+                }
+            }
         }
     }
 
-    fun refresh(data: LastUpdatesResponseModel) {
+    fun refresh(context: Activity, data: LastUpdatesResponseModel) {
         this.dataSet = data
+        this.context = context
         this.size = data.resource.size
         notifyDataSetChanged()
     }
@@ -57,7 +94,7 @@ class LastUpdatesAdapter : RecyclerView.Adapter<LastUpdatesAdapter.ViewHolder>()
     }
 
     override fun onBindViewHolder(viewHolder: ViewHolder, position: Int) {
-        viewHolder.bind(dataSet.resource[position])
+        viewHolder.bind(this.context, dataSet.resource[position])
     }
 
     override fun getItemCount() = size
