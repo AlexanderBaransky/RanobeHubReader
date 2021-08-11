@@ -49,8 +49,6 @@ class LastUpdatesAdapter : RecyclerView.Adapter<LastUpdatesAdapter.ViewHolder>()
                 val futureTarget: FutureTarget<Bitmap> = Glide.with(context)
                     .asBitmap()
                     .load(url)
-                    .transform(RoundedCorners(
-                        context.resources.getDimensionPixelSize(R.dimen.corner_radius)))
                     .submit()
 
                 try {
@@ -58,8 +56,11 @@ class LastUpdatesAdapter : RecyclerView.Adapter<LastUpdatesAdapter.ViewHolder>()
 
                     context.runOnUiThread {
                         //lastUpdatePoster.setImageBitmap(bitmap)
+                        lastUpdatePoster.scaleType = ImageView.ScaleType.FIT_START
                         Glide.with(context)
                             .load(bitmap)
+                            .transform(RoundedCorners(
+                                context.resources.getDimensionPixelSize(R.dimen.corner_radius)))
                             .transition(withCrossFade())
                             .into(lastUpdatePoster)
                     }
